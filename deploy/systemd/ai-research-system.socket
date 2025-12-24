@@ -1,0 +1,9 @@
+[Unit]
+Description=AI Research System socket
+
+[Socket]
+ListenStream=/run/ai_research_system.sock
+SocketUser=www-data
+
+[Install]
+WantedBy=sockets.target

@@ -1,0 +1,45 @@
+# Production requirements for AI Research System
+
+# Core Django and API
+Django==5.0.1
+djangorestframework==3.14.0
+django-cors-headers==4.3.1
+
+# Database
+psycopg2-binary==2.9.9
+
+# Cache and Session Storage
+django-redis==5.4.0
+redis==5.0.1
+
+# Configuration Management
+python-decouple==3.8
+
+# File Processing
+python-magic==0.4.27
+PyPDF2==3.0.1
+python-docx==1.1.0
+
+# AI and Research
+langchain==0.1.0
+langchain-openai==0.0.2
+langsmith==0.0.69
+openai==1.6.1
+tavily-python==0.3.3
+
+# Task Queue (Production)
+celery==5.3.4
+celery[redis]==5.3.4
+
+# Web Server (Production)
+gunicorn==21.2.0
+whitenoise==6.6.0
+
+# Monitoring and Logging
+sentry-sdk[django]==1.39.2
+
+# Security
+cryptography==41.0.8
+
+# Performance
+django-extensions==3.2.3

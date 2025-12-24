@@ -1,0 +1,40 @@
+{
+  "name": "ai-research-frontend",
+  "version": "1.0.0",
+  "description": "Frontend for AI Research System",
+  "type": "module",
+  "main": "js/app.js",
+  "scripts": {
+    "test": "node test/test-project-structure.js && node test/test-api-client.js && node test/test-state-management.js && node test/test-navigation.js && node test/test-file-validation.js",
+    "test:structure": "node test/test-project-structure.js",
+    "test:api": "node test/test-api-client.js",
+    "test:state": "node test/test-state-management.js",
+    "test:navigation": "node test/test-navigation.js",
+    "test:file-validation": "node test/test-file-validation.js",
+    "serve": "python -m http.server 8080",
+    "serve:php": "php -S localhost:8080",
+    "lint": "echo 'Linting not configured yet'",
+    "build": "echo 'Build process not needed for static files'"
+  },
+  "keywords": [
+    "ai",
+    "research",
+    "frontend",
+    "javascript",
+    "bootstrap",
+    "html5"
+  ],
+  "author": "AI Research System",
+  "license": "MIT",
+  "devDependencies": {
+    "jsdom": "^27.3.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ]
+}

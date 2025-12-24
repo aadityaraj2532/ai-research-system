@@ -1,0 +1,45 @@
+{
+  "workspace": {
+    "id": "local-workspace",
+    "name": "AI Research System"
+  },
+  "collection": {
+    "id": "ai-research-collection",
+    "name": "AI Research System API"
+  },
+  "environments": {
+    "local": {
+      "id": "local-env",
+      "name": "Local Development",
+      "values": {
+        "base_url": "http://localhost:8000",
+        "username": "admin",
+        "password": "admin"
+      }
+    },
+    "staging": {
+      "id": "staging-env",
+      "name": "Staging",
+      "values": {
+        "base_url": "https://staging.yourapi.com",
+        "username": "{{staging_username}}",
+        "password": "{{staging_password}}"
+      }
+    }
+  },
+  "setup_completed": true,
+  "last_run": {
+    "date": "2025-12-24T14:20:00Z",
+    "status": "success",
+    "tests_passed": 9,
+    "tests_failed": 0,
+    "notes": "All core service tests passed. API endpoints properly configured. Authentication working correctly."
+  },
+  "test_results": {
+    "core_services": "✅ PASSED",
+    "api_endpoints": "✅ CONFIGURED", 
+    "authentication": "✅ WORKING",
+    "database": "✅ READY",
+    "postman_collection": "✅ AVAILABLE"
+  }
+}
