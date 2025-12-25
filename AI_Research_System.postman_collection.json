@@ -1,0 +1,332 @@
+{
+  "info": {
+    "name": "AI Research System API",
+    "description": "Complete API collection for testing the AI Research System endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "research_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "file_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "basic",
+    "basic": [
+      {
+        "key": "username",
+        "value": "admin",
+        "type": "string"
+      },
+      {
+        "key": "password",
+        "value": "admin",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "1. Start Research",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 201) {",
+              "    const response = pm.response.json();",
+              "    pm.collectionVariables.set('research_id', response.id);",
+              "    pm.test('Research session created successfully', function () {",
+              "        pm.expect(response).to.have.property('id');",
+              "        pm.expect(response).to.have.property('query');",
+              "        pm.expect(response).to.have.property('status');",
+              "    });",
+              "} else {",
+              "    pm.test('Request failed', function () {",
+              "        pm.expect.fail('Expected 201 but got ' + pm.response.code);",
+              "    });",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"query\": \"What are the latest developments in quantum computing and their potential applications?\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/research/start",
+          "host": ["{{base_url}}"],
+          "path": ["api", "research", "start"]
+        },
+        "description": "Start a new research session with a query about quantum computing"
+      },
+      "response": []
+    },
+    {
+      "name": "2. Upload Context File",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 201) {",
+              "    const response = pm.response.json();",
+              "    pm.collectionVariables.set('file_id', response.id);",
+              "    pm.test('File uploaded successfully', function () {",
+              "        pm.expect(response).to.have.property('id');",
+              "        pm.expect(response).to.have.property('filename');",
+              "        pm.expect(response).to.have.property('file_type');",
+              "    });",
+              "} else {",
+              "    pm.test('File upload failed', function () {",
+              "        pm.expect.fail('Expected 201 but got ' + pm.response.code);",
+              "    });",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": [],
+              "description": "Upload a PDF, TXT, DOC, or DOCX file (max 10MB)"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/api/research/{{research_id}}/upload",
+          "host": ["{{base_url}}"],
+          "path": ["api", "research", "{{research_id}}", "upload"]
+        },
+        "description": "Upload a context file to the research session"
+      },
+      "response": []
+    },
+    {
+      "name": "3. Get Research Details",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    const response = pm.response.json();",
+              "    pm.test('Research details retrieved successfully', function () {",
+              "        pm.expect(response).to.have.property('id');",
+              "        pm.expect(response).to.have.property('query');",
+              "        pm.expect(response).to.have.property('status');",
+              "        pm.expect(response).to.have.property('reasoning');",
+              "    });",
+              "    ",
+              "    pm.test('Response includes required fields', function () {",
+              "        pm.expect(response).to.have.property('report');",
+              "        pm.expect(response).to.have.property('summary');",
+              "        pm.expect(response).to.have.property('token_usage');",
+              "        pm.expect(response).to.have.property('cost');",
+              "        pm.expect(response).to.have.property('trace_id');",
+              "    });",
+              "} else {",
+              "    pm.test('Request failed', function () {",
+              "        pm.expect.fail('Expected 200 but got ' + pm.response.code);",
+              "    });",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/research/{{research_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "research", "{{research_id}}"]
+        },
+        "description": "Get detailed information about the research session including report, summary, reasoning, sources, token usage, cost, and trace_id"
+      },
+      "response": []
+    },
+    {
+      "name": "4. Continue Research",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 201) {",
+              "    const response = pm.response.json();",
+              "    pm.test('Research continuation created successfully', function () {",
+              "        pm.expect(response).to.have.property('id');",
+              "        pm.expect(response).to.have.property('query');",
+              "        pm.expect(response).to.have.property('is_continuation');",
+              "        pm.expect(response.is_continuation).to.be.true;",
+              "    });",
+              "    // Update research_id to the new continuation session",
+              "    pm.collectionVariables.set('research_id', response.id);",
+              "} else {",
+              "    pm.test('Request failed', function () {",
+              "        pm.expect.fail('Expected 201 but got ' + pm.response.code);",
+              "    });",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"query\": \"What are the economic implications and market opportunities for these quantum computing developments?\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/research/{{research_id}}/continue",
+          "host": ["{{base_url}}"],
+          "path": ["api", "research", "{{research_id}}", "continue"]
+        },
+        "description": "Continue research from the previous session with a follow-up question"
+      },
+      "response": []
+    },
+    {
+      "name": "5. Get Research History",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    const response = pm.response.json();",
+              "    pm.test('Research history retrieved successfully', function () {",
+              "        pm.expect(response).to.have.property('results');",
+              "        pm.expect(response).to.have.property('count');",
+              "        pm.expect(response.results).to.be.an('array');",
+              "    });",
+              "    ",
+              "    if (response.results.length > 0) {",
+              "        pm.test('History items have required fields', function () {",
+              "            const item = response.results[0];",
+              "            pm.expect(item).to.have.property('id');",
+              "            pm.expect(item).to.have.property('query');",
+              "            pm.expect(item).to.have.property('status');",
+              "            pm.expect(item).to.have.property('created_at');",
+              "        });",
+              "    }",
+              "} else {",
+              "    pm.test('Request failed', function () {",
+              "        pm.expect.fail('Expected 200 but got ' + pm.response.code);",
+              "    });",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/research/history",
+          "host": ["{{base_url}}"],
+          "path": ["api", "research", "history"]
+        },
+        "description": "Get a list of all research sessions for the authenticated user"
+      },
+      "response": []
+    },
+    {
+      "name": "6. Get Continuation Details",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    const response = pm.response.json();",
+              "    pm.test('Continuation details retrieved successfully', function () {",
+              "        pm.expect(response).to.have.property('id');",
+              "        pm.expect(response).to.have.property('is_continuation');",
+              "        pm.expect(response.is_continuation).to.be.true;",
+              "        pm.expect(response).to.have.property('parent_session_id');",
+              "    });",
+              "} else {",
+              "    pm.test('Request failed', function () {",
+              "        pm.expect.fail('Expected 200 but got ' + pm.response.code);",
+              "    });",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/research/{{research_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "research", "{{research_id}}"]
+        },
+        "description": "Get details of the continuation research session to verify it links back to the parent"
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Set up authentication if needed",
+          "// This collection uses Basic Auth configured at the collection level"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test scripts can be added here"
+        ]
+      }
+    }
+  ]
+}
