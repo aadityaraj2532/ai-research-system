@@ -274,20 +274,27 @@ class OpenDeepResearchService:
         return RunnableConfig(**config)
     
     def _create_langsmith_config(self, user_context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """Create LangSmith-specific configuration."""
+        """Create LangSmith-specific configuration for comprehensive tracing."""
         langsmith_config = {}
         
-        # Enable LangSmith tracing if available
-        if LANGSMITH_AVAILABLE and os.getenv('LANGCHAIN_API_KEY'):
-            langsmith_config.update({
-                "langchain_tracing_v2": True,
-                "langchain_project": os.getenv('LANGCHAIN_PROJECT', 'ai-research-system'),
-                "langchain_api_key": os.getenv('LANGCHAIN_API_KEY'),
-            })
-            
-            # Add session-specific metadata for trace correlation
-            if user_context:
-                langsmith_config["langchain_session"] = f"user-{user_context.get('user_id', 'unknown')}"
+        # ALWAYS enable LangSmith tracing for full auditability
+        langsmith_config.update({
+            "langchain_tracing_v2": True,  # Force enable tracing
+            "langchain_project": os.getenv('LANGCHAIN_PROJECT', 'ai-research-system'),
+            "langchain_api_key": os.getenv('LANGCHAIN_API_KEY'),
+            "langchain_endpoint": os.getenv('LANGCHAIN_ENDPOINT', 'https://api.smith.langchain.com'),
+        })
+        
+        # Add session-specific metadata for trace correlation and auditability
+        if user_context:
+            langsmith_config["langchain_session"] = f"user-{user_context.get('user_id', 'unknown')}"
+            langsmith_config["langchain_metadata"] = {
+                "user_id": user_context.get('user_id'),
+                "session_id": user_context.get('session_id'),
+                "task_id": user_context.get('task_id'),
+                "timestamp": user_context.get('timestamp'),
+                "environment": "django-integration"
+            }
         
         return langsmith_config
     
@@ -432,36 +439,29 @@ class OpenDeepResearchService:
                 validation_results["errors"].append(f"Missing required environment variable: {env_var}")
                 validation_results["valid"] = False
         
-        # Check LangSmith configuration
-        if LANGSMITH_AVAILABLE:
-            langchain_api_key = os.getenv('LANGCHAIN_API_KEY')
-            langchain_project = os.getenv('LANGCHAIN_PROJECT')
-            langchain_tracing = os.getenv('LANGCHAIN_TRACING_V2')
-            
-            if langchain_api_key and langchain_project:
-                if self.langsmith_client:
-                    validation_results["langsmith_status"] = "enabled"
-                else:
-                    validation_results["langsmith_status"] = "error"
-                    validation_results["warnings"].append("LangSmith client initialization failed")
-            else:
-                validation_results["langsmith_status"] = "not_configured"
-                if not langchain_api_key:
-                    validation_results["warnings"].append("LANGCHAIN_API_KEY not set - tracing disabled")
-                if not langchain_project:
-                    validation_results["warnings"].append("LANGCHAIN_PROJECT not set - using default project")
+        # Check LangSmith configuration - REQUIRED for tracing and auditability
+        langchain_api_key = os.getenv('LANGCHAIN_API_KEY')
+        langchain_project = os.getenv('LANGCHAIN_PROJECT')
+        langchain_tracing = os.getenv('LANGCHAIN_TRACING_V2')
+        
+        if not langchain_api_key:
+            validation_results["errors"].append("LANGCHAIN_API_KEY is required for tracing and auditability")
+            validation_results["valid"] = False
+            validation_results["langsmith_status"] = "missing_api_key"
+        elif not langchain_project:
+            validation_results["warnings"].append("LANGCHAIN_PROJECT not set - using default project")
+            validation_results["langsmith_status"] = "partial_config"
+        elif langchain_tracing != 'true':
+            validation_results["warnings"].append("LANGCHAIN_TRACING_V2 not enabled - tracing may not work")
+            validation_results["langsmith_status"] = "tracing_disabled"
         else:
-            validation_results["langsmith_status"] = "not_available"
-            validation_results["warnings"].append("LangSmith package not available - tracing disabled")
-        
-        # Check optional environment variables
-        optional_env_vars = [
-            "LANGCHAIN_TRACING_V2"
-        ]
-        
-        for env_var in optional_env_vars:
-            if not os.getenv(env_var):
-                validation_results["warnings"].append(f"Optional environment variable not set: {env_var}")
+            # Test LangSmith connection
+            if LANGSMITH_AVAILABLE and self.langsmith_client:
+                validation_results["langsmith_status"] = "enabled"
+                validation_results["warnings"].append("LangSmith tracing is ENABLED - all LLM runs will be traced and auditable")
+            else:
+                validation_results["langsmith_status"] = "connection_failed"
+                validation_results["warnings"].append("LangSmith client initialization failed")
         
         return validation_results
     

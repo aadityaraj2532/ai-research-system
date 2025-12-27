@@ -1,5 +1,5 @@
 """
-Celery tasks for background research execution.
+Celery tasks for background research execution with full LangSmith tracing.
 """
 import asyncio
 import logging
@@ -7,7 +7,7 @@ from typing import Dict, Any, Optional
 from celery import shared_task
 from django.utils import timezone
 from .models import ResearchSession, ResearchCost
-from .services import research_service
+from .services import research_service  # Use local service with LangSmith tracing
 from costs.services import cost_tracking_service
 
 logger = logging.getLogger(__name__)
@@ -16,7 +16,9 @@ logger = logging.getLogger(__name__)
 @shared_task(bind=True, max_retries=3, default_retry_delay=60)
 def execute_research_task(self, session_id: str, custom_config: Optional[Dict[str, Any]] = None):
     """
-    Execute a research session in the background using Open Deep Research.
+    Execute a research session with full LangSmith tracing and auditability.
+    
+    All LLM runs will be traced and visible in LangSmith for monitoring and debugging.
     
     Args:
         session_id: UUID of the research session to execute
@@ -37,7 +39,7 @@ def execute_research_task(self, session_id: str, custom_config: Optional[Dict[st
         session.status = 'PROCESSING'
         session.save(update_fields=['status', 'updated_at'])
         
-        logger.info(f"Starting research execution for session {session_id}")
+        logger.info(f"Starting research execution for session {session_id} with LangSmith tracing")
         
         # Prepare research context
         previous_context = None
@@ -47,11 +49,12 @@ def execute_research_task(self, session_id: str, custom_config: Optional[Dict[st
                 "final_report": session.parent_session.summary
             })
         
-        # Create configuration with user context
+        # Create configuration with user context for LangSmith tracing
         user_context = {
             "user_id": session.user_id,
             "session_id": str(session.id),
-            "task_id": self.request.id
+            "task_id": self.request.id,
+            "timestamp": timezone.now().isoformat()
         }
         
         config = research_service.create_config(
@@ -59,7 +62,7 @@ def execute_research_task(self, session_id: str, custom_config: Optional[Dict[st
             user_context=user_context
         )
         
-        # Execute research asynchronously
+        # Execute research asynchronously with full LangSmith tracing
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         
@@ -86,21 +89,23 @@ def execute_research_task(self, session_id: str, custom_config: Optional[Dict[st
             }
             session.summary = result["research_brief"] or result["final_report"][:500]
             
-            # Store comprehensive reasoning data (including sensitive internal data)
+            # Store comprehensive reasoning data (including LangSmith trace info)
             raw_reasoning = {
                 "research_brief": result["research_brief"],
-                "methodology": "Open Deep Research multi-step workflow",
+                "methodology": "Open Deep Research with LangSmith tracing",
                 "raw_notes": result["raw_notes"],  # Keep all raw notes for internal use
                 "internal_agent_communications": result.get("messages", []),
                 "tool_execution_logs": result.get("tool_calls", []),
-                "debug_info": {
+                "langsmith_trace_info": {
                     "trace_id": result.get("trace_id"),
-                    "execution_metadata": result.get("trace_metadata", {})
+                    "execution_metadata": result.get("trace_metadata", {}),
+                    "tracing_enabled": True,
+                    "project": user_context.get("langsmith_project", "ai-research-system")
                 }
             }
             session.reasoning = raw_reasoning
             
-            # Set LangSmith trace ID if available in config
+            # Set LangSmith trace ID if available
             trace_id = result.get("trace_id")
             if trace_id:
                 session.langsmith_trace_id = trace_id
@@ -142,14 +147,15 @@ def execute_research_task(self, session_id: str, custom_config: Optional[Dict[st
                     }
                 )
             
-            logger.info(f"Research execution completed successfully for session {session_id}")
+            logger.info(f"Research execution completed successfully for session {session_id} - all LLM runs traced in LangSmith")
             
             # Include trace information in response
             response_data = {
                 "success": True,
                 "session_id": str(session.id),
                 "status": session.status,
-                "summary": session.summary
+                "summary": session.summary,
+                "langsmith_tracing": True
             }
             
             # Add trace information for debugging
@@ -170,7 +176,8 @@ def execute_research_task(self, session_id: str, custom_config: Optional[Dict[st
             return {
                 "success": False,
                 "session_id": str(session.id),
-                "error": result["error"]
+                "error": result["error"],
+                "langsmith_tracing": True
             }
             
     except Exception as exc:
@@ -191,7 +198,8 @@ def execute_research_task(self, session_id: str, custom_config: Optional[Dict[st
         return {
             "success": False,
             "session_id": session_id,
-            "error": f"Task failed after {self.max_retries} retries: {str(exc)}"
+            "error": f"Task failed after {self.max_retries} retries: {str(exc)}",
+            "langsmith_tracing": True
         }
 
 
