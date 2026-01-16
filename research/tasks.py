@@ -3,9 +3,20 @@ Celery tasks for background research execution with full LangSmith tracing.
 """
 import asyncio
 import logging
+import os
 from typing import Dict, Any, Optional
 from celery import shared_task
 from django.utils import timezone
+from decouple import config
+
+# Ensure environment variables are loaded
+os.environ.setdefault('OPENAI_API_KEY', config('OPENAI_API_KEY', default=''))
+os.environ.setdefault('OPENAI_API_BASE', config('OPENAI_API_BASE', default=''))
+os.environ.setdefault('TAVILY_API_KEY', config('TAVILY_API_KEY', default=''))
+os.environ.setdefault('LANGCHAIN_API_KEY', config('LANGCHAIN_API_KEY', default=''))
+os.environ.setdefault('LANGCHAIN_PROJECT', config('LANGCHAIN_PROJECT', default='ai-research-system'))
+os.environ.setdefault('LANGCHAIN_TRACING_V2', config('LANGCHAIN_TRACING_V2', default='true'))
+
 from .models import ResearchSession, ResearchCost
 from .services import research_service  # Use local service with LangSmith tracing
 from costs.services import cost_tracking_service
@@ -79,6 +90,40 @@ def execute_research_task(self, session_id: str, custom_config: Optional[Dict[st
         
         # Process results
         if result["success"]:
+            # Debug: Log what we received
+            logger.info(f"Research result received - final_report length: {len(result['final_report'])}, research_brief length: {len(result.get('research_brief', ''))}")
+            
+            # Check if this is a clarification request (no actual research done)
+            if not result["final_report"] and not result["research_brief"] and not result["notes"]:
+                # This is a clarification request - check the last message
+                messages = result.get("messages", [])
+                if messages:
+                    last_message = messages[-1]
+                    message_content = ""
+                    if hasattr(last_message, 'content'):
+                        message_content = last_message.content
+                    elif isinstance(last_message, dict):
+                        message_content = last_message.get('content', '')
+                    
+                    # If the last message is asking a question, treat as clarification needed
+                    if message_content and '?' in message_content:
+                        session.status = 'FAILED'
+                        session.completed_at = timezone.now()
+                        session.reasoning = {
+                            "error": "Clarification needed",
+                            "clarification_question": message_content,
+                            "note": "The research agent needs more information to proceed. Please provide a more detailed query or disable clarification in settings."
+                        }
+                        session.save()
+                        logger.warning(f"Research session {session_id} requires clarification: {message_content}")
+                        return {
+                            "success": False,
+                            "session_id": str(session.id),
+                            "error": "Clarification needed",
+                            "clarification_question": message_content,
+                            "langsmith_tracing": True
+                        }
+            
             # Update session with results
             session.status = 'COMPLETED'
             session.completed_at = timezone.now()
@@ -90,11 +135,22 @@ def execute_research_task(self, session_id: str, custom_config: Optional[Dict[st
             session.summary = result["research_brief"] or result["final_report"][:500]
             
             # Store comprehensive reasoning data (including LangSmith trace info)
+            # Convert messages to serializable format
+            messages_serializable = []
+            for msg in result.get("messages", []):
+                if hasattr(msg, 'content') and hasattr(msg, 'type'):
+                    messages_serializable.append({
+                        "type": msg.type,
+                        "content": msg.content
+                    })
+                elif isinstance(msg, dict):
+                    messages_serializable.append(msg)
+            
             raw_reasoning = {
                 "research_brief": result["research_brief"],
                 "methodology": "Open Deep Research with LangSmith tracing",
                 "raw_notes": result["raw_notes"],  # Keep all raw notes for internal use
-                "internal_agent_communications": result.get("messages", []),
+                "internal_agent_communications": messages_serializable,
                 "tool_execution_logs": result.get("tool_calls", []),
                 "langsmith_trace_info": {
                     "trace_id": result.get("trace_id"),

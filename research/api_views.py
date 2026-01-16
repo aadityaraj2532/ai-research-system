@@ -1,7 +1,8 @@
 """
 API views that match the exact endpoint specifications.
 """
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, parser_classes
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
@@ -59,6 +60,7 @@ def start_research(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
+@parser_classes([MultiPartParser, FormParser])
 def upload_context_file(request, research_id):
     """
     Upload a context file to a research session.
@@ -70,6 +72,7 @@ def upload_context_file(request, research_id):
         validate_uuid(research_id, 'research_id')
         
         # Delegate to the existing file upload handler
+        # Pass the request directly - it's already a DRF request
         return manage_session_files(request, research_id)
         
     except ValidationError as e:

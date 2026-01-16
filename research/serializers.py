@@ -50,18 +50,33 @@ class ResearchSessionListSerializer(serializers.ModelSerializer):
     duration = serializers.ReadOnlyField()
     is_continuation = serializers.ReadOnlyField()
     file_count = serializers.SerializerMethodField()
+    cost = ResearchCostSerializer(read_only=True)
+    token_usage = serializers.SerializerMethodField()
     
     class Meta:
         model = ResearchSession
         fields = [
             'id', 'query', 'status', 'summary', 'duration',
-            'is_continuation', 'file_count', 'created_at', 'completed_at'
+            'is_continuation', 'file_count', 'cost', 'token_usage',
+            'created_at', 'completed_at'
         ]
         read_only_fields = ['id', 'created_at', 'completed_at']
     
     def get_file_count(self, obj):
         """Get the number of files associated with this session."""
         return obj.files.count()
+    
+    def get_token_usage(self, obj):
+        """Get token usage from cost record."""
+        try:
+            cost = obj.cost
+            return {
+                'total_tokens': cost.total_tokens,
+                'input_tokens': cost.input_tokens,
+                'output_tokens': cost.output_tokens
+            }
+        except:
+            return {'total_tokens': 0, 'input_tokens': 0, 'output_tokens': 0}
 
 
 class ResearchSessionDetailSerializer(serializers.ModelSerializer):
@@ -218,6 +233,11 @@ class ResearchSessionCreateSerializer(serializers.ModelSerializer):
                 parent_session=parent_session,
                 **validated_data
             )
+            
+            # Trigger the research execution task
+            from .tasks import execute_research_task
+            execute_research_task.delay(str(research_session.id))
+            logger.info(f"Research task queued for session {research_session.id}")
             
             return research_session
             

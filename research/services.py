@@ -209,21 +209,21 @@ class OpenDeepResearchService:
             "configurable": {
                 # Research Configuration
                 "max_structured_output_retries": 3,
-                "allow_clarification": True,
+                "allow_clarification": False,  # Disabled to avoid incomplete research sessions
                 "max_concurrent_research_units": 3,  # Reduced for Django integration
                 "search_api": SearchAPI.TAVILY.value,
                 "max_researcher_iterations": 6,
                 "max_react_tool_calls": 10,
                 
-                # Model Configuration
-                "summarization_model": "openai:gpt-4o-mini",
+                # Model Configuration (using Groq GPT-OSS 20B - supports structured outputs)
+                "summarization_model": "openai:openai/gpt-oss-20b",
                 "summarization_model_max_tokens": 8192,
                 "max_content_length": 50000,
-                "research_model": "openai:gpt-4o",
+                "research_model": "openai:openai/gpt-oss-20b",
                 "research_model_max_tokens": 10000,
-                "compression_model": "openai:gpt-4o",
+                "compression_model": "openai:openai/gpt-oss-20b",
                 "compression_model_max_tokens": 8192,
-                "final_report_model": "openai:gpt-4o",
+                "final_report_model": "openai:openai/gpt-oss-20b",
                 "final_report_model_max_tokens": 10000,
                 
                 # MCP Configuration (optional)
@@ -369,13 +369,14 @@ class OpenDeepResearchService:
                     print(f"Warning: Could not capture trace ID: {e}")
             
             # Extract and structure the results
+            # Result is a state object, access attributes directly
             return {
                 "success": True,
-                "final_report": result.get("final_report", ""),
-                "research_brief": result.get("research_brief", ""),
-                "notes": result.get("notes", []),
-                "raw_notes": result.get("raw_notes", []),
-                "messages": result.get("messages", []),
+                "final_report": result.get("final_report", "") if isinstance(result, dict) else getattr(result, "final_report", ""),
+                "research_brief": result.get("research_brief", "") if isinstance(result, dict) else getattr(result, "research_brief", ""),
+                "notes": result.get("notes", []) if isinstance(result, dict) else getattr(result, "notes", []),
+                "raw_notes": result.get("raw_notes", []) if isinstance(result, dict) else getattr(result, "raw_notes", []),
+                "messages": result.get("messages", []) if isinstance(result, dict) else getattr(result, "messages", []),
                 "error": None,
                 "trace_metadata": trace_metadata,
                 "trace_id": trace_id
@@ -474,19 +475,19 @@ class OpenDeepResearchService:
         """
         return {
             "research_models": [
-                "openai:gpt-4o",
-                "openai:gpt-4o-mini", 
-                "openai:gpt-4-turbo",
+                "openai:openai/gpt-oss-20b",
+                "openai:openai/gpt-oss-120b",
+                "openai:moonshotai/kimi-k2-instruct-0905",
                 "anthropic:claude-3-5-sonnet-20241022",
                 "anthropic:claude-3-5-haiku-20241022"
             ],
             "compression_models": [
-                "openai:gpt-4o",
-                "openai:gpt-4o-mini",
+                "openai:openai/gpt-oss-20b",
+                "openai:openai/gpt-oss-120b",
                 "anthropic:claude-3-5-sonnet-20241022"
             ],
             "final_report_models": [
-                "openai:gpt-4o",
+                "openai:openai/gpt-oss-20b",
                 "anthropic:claude-3-5-sonnet-20241022"
             ]
         }

@@ -28,15 +28,17 @@ def health_check(request):
         health_status['status'] = 'unhealthy'
         health_status['checks']['database'] = f'unhealthy: {str(e)}'
     
-    # Check Redis connection (if configured)
+    # Check Redis connection (if configured) - optional, don't fail if not available
     try:
-        if hasattr(settings, 'CELERY_BROKER_URL') and 'redis' in settings.CELERY_BROKER_URL:
+        if hasattr(settings, 'CELERY_BROKER_URL') and settings.CELERY_BROKER_URL and 'redis' in settings.CELERY_BROKER_URL:
             redis_client = redis.from_url(settings.CELERY_BROKER_URL)
             redis_client.ping()
             health_status['checks']['redis'] = 'healthy'
+        else:
+            health_status['checks']['redis'] = 'not_configured'
     except Exception as e:
-        health_status['status'] = 'unhealthy'
-        health_status['checks']['redis'] = f'unhealthy: {str(e)}'
+        # Redis is optional - log warning but don't fail health check
+        health_status['checks']['redis'] = f'warning: {str(e)}'
     
     # Check file system permissions
     try:
