@@ -114,7 +114,6 @@ services:
   # Redis Service
   - type: redis
     name: ai-research-redis
-    ipAllowList: [] # Access from within Render only
     plan: free
 
 databases:
