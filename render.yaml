@@ -115,9 +115,7 @@ services:
   - type: redis
     name: ai-research-redis-new
     plan: free
-    ipAllowList:
-      - source: 0.0.0.0/0
-        description: "required for blueprint sync"
+    plan: free
 
 databases:
   - name: ai-research-db-new
