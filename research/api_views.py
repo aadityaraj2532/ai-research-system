@@ -3,10 +3,11 @@ API views that match the exact endpoint specifications.
 """
 from rest_framework.decorators import api_view, permission_classes, parser_classes
 from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
+from django.conf import settings
 from .models import ResearchSession
 from .serializers import (
     ResearchSessionCreateSerializer,
@@ -21,9 +22,12 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Use AllowAny for development, IsAuthenticated for production
+PERMISSION_CLASS = AllowAny if settings.DEBUG else IsAuthenticated
+
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([PERMISSION_CLASS])
 def start_research(request):
     """
     Start a new research session.
@@ -39,6 +43,16 @@ def start_research(request):
         data = request.data.copy()
         if 'parent_research_id' in data:
             data['parent_session_id'] = data.pop('parent_research_id')
+        
+        # For development without authentication, use a default user
+        if settings.DEBUG and not request.user.is_authenticated:
+            # Create a mock user for development
+            from django.contrib.auth.models import AnonymousUser
+            class MockUser:
+                username = 'dev_user'
+                id = 1
+                is_authenticated = True
+            request.user = MockUser()
         
         serializer = ResearchSessionCreateSerializer(data=data, context={'request': request})
         if serializer.is_valid():
@@ -59,7 +73,7 @@ def start_research(request):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([PERMISSION_CLASS])
 @parser_classes([MultiPartParser, FormParser])
 def upload_context_file(request, research_id):
     """
@@ -89,7 +103,7 @@ def upload_context_file(request, research_id):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([PERMISSION_CLASS])
 def continue_research(request, research_id):
     """
     Continue research from a previous session.
@@ -100,6 +114,14 @@ def continue_research(request, research_id):
     }
     """
     try:
+        # For development without authentication, use a default user
+        if settings.DEBUG and not request.user.is_authenticated:
+            class MockUser:
+                username = 'dev_user'
+                id = 1
+                is_authenticated = True
+            request.user = MockUser()
+        
         # Validate research_id
         validate_uuid(research_id, 'research_id')
         user_id = validate_user_id(request.user.username or str(request.user.id))
@@ -155,7 +177,7 @@ def continue_research(request, research_id):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([PERMISSION_CLASS])
 def research_history(request):
     """
     Get research history for the authenticated user.
@@ -163,6 +185,14 @@ def research_history(request):
     GET /api/research/history
     """
     try:
+        # For development without authentication, use a default user
+        if settings.DEBUG and not request.user.is_authenticated:
+            class MockUser:
+                username = 'dev_user'
+                id = 1
+                is_authenticated = True
+            request.user = MockUser()
+        
         user_id = validate_user_id(request.user.username or str(request.user.id))
         
         # Get all research sessions for the user
@@ -193,7 +223,7 @@ def research_history(request):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([PERMISSION_CLASS])
 def research_details(request, research_id):
     """
     Get detailed information about a specific research session.
@@ -210,6 +240,14 @@ def research_details(request, research_id):
     - trace_id
     """
     try:
+        # For development without authentication, use a default user
+        if settings.DEBUG and not request.user.is_authenticated:
+            class MockUser:
+                username = 'dev_user'
+                id = 1
+                is_authenticated = True
+            request.user = MockUser()
+        
         # Validate research_id
         validate_uuid(research_id, 'research_id')
         user_id = validate_user_id(request.user.username or str(request.user.id))
