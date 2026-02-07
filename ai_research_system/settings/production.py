@@ -26,31 +26,16 @@ SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=False, cast=bool
 CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=False, cast=bool)
 
 # Database - Use PostgreSQL in production, fallback to SQLite for testing
-DB_ENGINE = config('DB_ENGINE', default='django.db.backends.postgresql')
+# Database - Use DATABASE_URL environment variable (Render/Railway standard)
+import dj_database_url
 
-if DB_ENGINE == 'django.db.backends.postgresql':
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': config('DB_NAME'),
-            'USER': config('DB_USER'),
-            'PASSWORD': config('DB_PASSWORD'),
-            'HOST': config('DB_HOST', default='localhost'),
-            'PORT': config('DB_PORT', default='5432'),
-            'CONN_MAX_AGE': 600,
-            'OPTIONS': {
-                'sslmode': config('DB_SSL_MODE', default='prefer'),
-            },
-        }
-    }
-else:
-    # Fallback to SQLite for testing/development
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db_production.sqlite3',
-        }
-    }
+DATABASES = {
+    'default': dj_database_url.config(
+        default=config('DATABASE_URL', default='sqlite:///' + str(BASE_DIR / 'db.sqlite3')),
+        conn_max_age=600,
+        ssl_require=False  # Set to True if strictly enforcing SSL, Render handles this at infra level usually
+    )
+}
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
