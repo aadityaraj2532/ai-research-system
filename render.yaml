@@ -15,17 +15,17 @@ services:
       - key: REDIS_URL
         fromService:
           type: redis
-          name: ai-research-redis
+          name: ai-research-redis-new
           property: connectionString
       - key: CELERY_BROKER_URL
         fromService:
           type: redis
-          name: ai-research-redis
+          name: ai-research-redis-new
           property: connectionString
       - key: CELERY_RESULT_BACKEND
         fromService:
           type: redis
-          name: ai-research-redis
+          name: ai-research-redis-new
           property: connectionString
       - key: SECRET_KEY
         generateValue: true
@@ -77,17 +77,17 @@ services:
       - key: REDIS_URL
         fromService:
           type: redis
-          name: ai-research-redis
+          name: ai-research-redis-new
           property: connectionString
       - key: CELERY_BROKER_URL
         fromService:
           type: redis
-          name: ai-research-redis
+          name: ai-research-redis-new
           property: connectionString
       - key: CELERY_RESULT_BACKEND
         fromService:
           type: redis
-          name: ai-research-redis
+          name: ai-research-redis-new
           property: connectionString
       - key: SECRET_KEY
         fromService:
@@ -113,7 +113,7 @@ services:
 
   # Redis Service
   - type: redis
-    name: ai-research-redis
+    name: ai-research-redis-new
     plan: free
     ipAllowList:
       - source: 0.0.0.0/0
