@@ -50,7 +50,6 @@ services:
     buildCommand: "npm install && npm run build"
     startCommand: "npm run start"
     envVars:
-    envVars:
       - key: NODE_VERSION
         value: 20.11.0
       # Using hostport which is explicitly listed as valid in Render error messages
