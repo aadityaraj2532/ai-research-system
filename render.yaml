@@ -5,7 +5,8 @@ services:
     env: python
     plan: free
     buildCommand: "./build.sh"
-    startCommand: "gunicorn ai_research_system.wsgi:application --bind 0.0.0.0:$PORT"
+    # Run Celery worker in background before starting Gunicorn (Free Tier workaround)
+    startCommand: "celery -A ai_research_system worker -l info --concurrency 2 & gunicorn ai_research_system.wsgi:application --bind 0.0.0.0:$PORT"
     healthCheckPath: "/health/"
     envVars:
       - key: PYTHON_VERSION
@@ -53,34 +54,6 @@ services:
       # Render services are accessible internally at host:port
       - key: BACKEND_HOST
         value: ai-research-backend:10000
-
-  # Celery Worker
-  - type: worker
-    name: ai-research-worker
-    env: python
-    plan: free
-    buildCommand: "./build.sh"
-    startCommand: "celery -A ai_research_system worker -l info --concurrency 4"
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.9.0
-      - key: DJANGO_SETTINGS_MODULE
-        value: ai_research_system.settings.production
-      - key: DJANGO_ENVIRONMENT
-        value: production
-      - key: DATABASE_URL
-        fromDatabase:
-          name: ai-research-db
-          property: connectionString
-      - key: REDIS_URL
-        fromService:
-          type: redis
-          name: ai-research-redis
-          property: connectionString
-      - key: OPENAI_API_KEY
-        sync: false
-      - key: TAVILY_API_KEY
-        sync: false
 
   # Redis
   - type: redis
