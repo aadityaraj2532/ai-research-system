@@ -10,7 +10,8 @@ from decouple import config
 DEBUG = False
 
 # Production hosts - should be configured via environment variables
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='', cast=lambda v: [s.strip() for s in v.split(',') if s.strip()])
+# Default to wildcard for Render (subdomains like *.onrender.com)
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*', cast=lambda v: [s.strip() for s in v.split(',') if s.strip()] if v != '*' else ['*'])
 
 # Security Settings
 SECURE_BROWSER_XSS_FILTER = True
