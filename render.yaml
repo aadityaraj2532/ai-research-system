@@ -9,7 +9,7 @@ services:
     name: ai-research-backend
     env: python
     buildCommand: "./build.sh"
-    startCommand: "gunicorn ai_research_system.wsgi:application"
+    startCommand: "gunicorn ai_research_system.wsgi:application --bind 0.0.0.0:$PORT"
     healthCheckPath: "/health/"
     envVars:
       - key: PYTHON_VERSION
@@ -53,10 +53,7 @@ services:
       - key: NODE_VERSION
         value: 20.11.0
       - key: BACKEND_HOST
-        fromService:
-          type: web
-          name: ai-research-backend
-          property: hostport
+        value: ai-research-backend:10000
 
   # Celery Worker
   - type: worker
