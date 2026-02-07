@@ -8,7 +8,7 @@ services:
     plan: free
     buildCommand: "./build.sh"
     # Run Celery worker in background before starting Gunicorn (Free Tier workaround)
-    startCommand: "celery -A ai_research_system worker -l info --concurrency 2 & gunicorn ai_research_system.wsgi:application --bind 0.0.0.0:$PORT"
+    startCommand: "./start.sh"
     healthCheckPath: "/health/"
     envVars:
       - key: PYTHON_VERSION
