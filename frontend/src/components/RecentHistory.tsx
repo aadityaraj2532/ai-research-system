@@ -20,7 +20,7 @@ export default function RecentHistory() {
 
     return (
         <div className="mt-12 w-full max-w-2xl mx-auto">
-            <h3 className="text-sm font-medium text-muted-foreground mb-4 flex items-center gap-2">
+            <h3 className="text-sm font-medium text-muted-foreground mb-4 flex items-center justify-center gap-2">
                 <Clock className="w-4 h-4" />
                 Recent Research
             </h3>
