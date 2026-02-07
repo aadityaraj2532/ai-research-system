@@ -5,6 +5,9 @@ set -o errexit
 # Install dependencies
 pip install -r requirements.txt
 
+# Create __init__.py for open_deep_research package (submodule lacks it)
+touch ./open_deep_research/src/open_deep_research/__init__.py
+
 # Install the local open_deep_research package in editable mode
 pip install -e ./open_deep_research
 
