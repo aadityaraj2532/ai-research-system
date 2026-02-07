@@ -29,17 +29,14 @@ export default function RecentHistory() {
                     <Link
                         key={session.id}
                         href={`/research/${session.id}`}
-                        className="group flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-all duration-200"
+                        className="group flex flex-col items-center justify-center p-4 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-all duration-200"
                     >
-                        <div className="flex-1 min-w-0">
-                            <p className="font-medium text-foreground truncate group-hover:text-primary transition-colors">
-                                {session.query}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                                {formatDistanceToNow(new Date(session.created_at), { addSuffix: true })} • {session.status.toLowerCase()}
-                            </p>
-                        </div>
-                        <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-200" />
+                        <p className="font-medium text-foreground text-center group-hover:text-primary transition-colors">
+                            {session.query}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1 text-center">
+                            {formatDistanceToNow(new Date(session.created_at), { addSuffix: true })} • {session.status.toLowerCase()}
+                        </p>
                     </Link>
                 ))}
             </div>
