@@ -1,13 +1,9 @@
-databases:
-  - name: ai-research-db
-    databaseName: ai_research
-    user: ai_research_user
-
 services:
   # Backend (Django)
   - type: web
     name: ai-research-backend
     env: python
+    plan: free
     buildCommand: "./build.sh"
     startCommand: "gunicorn ai_research_system.wsgi:application --bind 0.0.0.0:$PORT"
     healthCheckPath: "/health/"
@@ -46,6 +42,7 @@ services:
   - type: web
     name: ai-research-frontend
     env: node
+    plan: free
     rootDir: frontend
     buildCommand: "npm install && npm run build"
     startCommand: "npm run start"
@@ -61,6 +58,7 @@ services:
   - type: worker
     name: ai-research-worker
     env: python
+    plan: free
     buildCommand: "./build.sh"
     startCommand: "celery -A ai_research_system worker -l info --concurrency 4"
     envVars:
@@ -87,4 +85,11 @@ services:
   # Redis
   - type: redis
     name: ai-research-redis
+    plan: free
     ipAllowList: [] # Allow internal access only
+
+databases:
+  - name: ai-research-db
+    databaseName: ai_research
+    user: ai_research_user
+    plan: free
