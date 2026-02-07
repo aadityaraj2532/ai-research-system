@@ -52,12 +52,12 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 20.11.0
-      # Using hostport which is explicitly listed as valid in Render error messages
+      # Use host property - hostport may fail for web services in some contexts
       - key: BACKEND_HOST
         fromService:
           type: web
           name: ai-research-backend
-          property: hostport
+          property: host
 
   # Celery Worker
   - type: worker
