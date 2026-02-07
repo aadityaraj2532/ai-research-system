@@ -55,11 +55,11 @@ services:
     buildCommand: "cd frontend && npm install && npm run build"
     startCommand: "cd frontend && npm start"
     envVars:
-      - key: NEXT_PUBLIC_API_URL
+      - key: BACKEND_HOST
         fromService:
           type: web
           name: ai-research-backend
-          property: url
+          property: hostport
 
   # Worker Service
   - type: worker
