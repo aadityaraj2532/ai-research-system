@@ -236,7 +236,21 @@ class ResearchSessionCreateSerializer(serializers.ModelSerializer):
             
             # Trigger the research execution task
             from .tasks import execute_research_task
-            execute_research_task.delay(str(research_session.id))
+            from django.conf import settings
+            import threading
+            
+            # If running locally with eager execution, run in a separate thread to avoid blocking API
+            if getattr(settings, 'CELERY_TASK_ALWAYS_EAGER', False):
+                logger.info(f"Running research task for session {research_session.id} in background thread (EAGER mode)")
+                thread = threading.Thread(
+                    target=execute_research_task.delay,
+                    args=(str(research_session.id),)
+                )
+                thread.daemon = True
+                thread.start()
+            else:
+                execute_research_task.delay(str(research_session.id))
+                
             logger.info(f"Research task queued for session {research_session.id}")
             
             return research_session
