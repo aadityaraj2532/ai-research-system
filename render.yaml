@@ -52,12 +52,10 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 20.11.0
-      # Use host property - hostport may fail for web services in some contexts
+      # Hardcoding internal service URL to bypass Blueprint validation issues
+      # Render services are accessible internally at host:port
       - key: BACKEND_HOST
-        fromService:
-          type: web
-          name: ai-research-backend
-          property: host
+        value: ai-research-backend:10000
 
   # Celery Worker
   - type: worker
