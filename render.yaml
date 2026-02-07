@@ -115,7 +115,6 @@ services:
   - type: redis
     name: ai-research-redis-new
     plan: free
-    plan: free
 
 databases:
   - name: ai-research-db-new
